@@ -406,7 +406,7 @@ impl BossHpLog {
 #[derive(Debug, Default, Deserialize, Clone)]
 pub struct Npc {
     pub id: i32,
-    pub name: String,
+    pub name: Option<String>,
     pub grade: String,
     #[serde(rename = "type")]
     pub npc_type: String,
@@ -1066,7 +1066,8 @@ lazy_static! {
             308022, 308023, 308024, 308025, 308026, 308027, 308028, 308029, 308030, 308037, 308039,
             308040, 308041, 308042, 308043, 308044, 308239, 308339, 308410, 308411, 308412, 308414,
             308415, 308416, 308417, 308418, 308419, 308420, 308421, 308422, 308423, 308424, 308425,
-            308426, 308428, 308429, 308430, 308437, 309020,
+            308426, 308428, 308429, 308430, 308437, 309020, 30865, 30866
+            // todo behemoth
         ];
 
         valid_zones.iter().cloned().collect()

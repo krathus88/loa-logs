@@ -1,12 +1,24 @@
 <div class="rounded-md flex space-x-2 items-center">
   <div class="text-lg font-semibold text-white">
-    v1.15.0
+    v1.16.2
   </div>
   <div class="bg-accent-500 px-2 font-medium rounded-md text-white">
     New
   </div>
 </div>
 
+#### BUG FIXES AND IMPROVEMENTS
+- fixed artist sunsketch buff
+
+### v1.16.1
+#### NEW FEATURES
+- update meter for behemoth patch
+
+#### BUG FIXES AND IMPROVEMENTS
+- fix meter crashes
+- fix behemoth g2 not being labeled correctly
+
+### v1.15.0
 #### NEW FEATURES
 
 -   update meter for august patch
