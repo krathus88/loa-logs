@@ -1,145 +1,133 @@
 {
-  "$schema": "../node_modules/@tauri-apps/cli/schema.json",
-  "build": {
-    "beforeBuildCommand": "npm run build",
-    "beforeDevCommand": "npm run dev",
-    "devPath": "http://localhost:5173",
-    "distDir": "../build"
-  },
-  "package": {
-    "productName": "LOA Logs",
-    "version": "1.15.0"
-  },
-  "tauri": {
-    "allowlist": {
-      "all": false,
-      "window": {
-        "startDragging": true,
-        "setAlwaysOnTop": true,
-        "setIgnoreCursorEvents": true,
-        "show": true,
-        "hide": true,
-        "maximize": true,
-        "minimize": true,
-        "unminimize": true,
-        "unmaximize": true,
-        "setFocus": true
-      },
-      "clipboard": {
-        "all": true
-      },
-      "shell": {
-        "open": true
-      },
-      "process": {
-        "relaunch": true
-      },
-      "fs": {
-        "readFile": true,
-        "copyFile": true,
-        "scope": ["**"]
-      },
-      "path": {
-        "all": true
-      },
-      "protocol": {
-        "asset": true,
-        "assetScope": [
-          "$RESOURCE/images/**/*.png"
-        ]
-      },
-      "globalShortcut": {
-        "all": true
-      },
-      "http": {
-        "all": true,
-        "request": true,
-        "scope": ["https://*"]
-      }
+    "$schema": "../node_modules/@tauri-apps/cli/schema.json",
+    "build": {
+        "beforeBuildCommand": "npm run build",
+        "beforeDevCommand": "npm run dev",
+        "devPath": "http://localhost:5173",
+        "distDir": "../build"
     },
-    "bundle": {
-      "active": true,
-      "category": "Utility",
-      "copyright": "GNU General Public License v3.0",
-      "resources": [
-        "meter-data/*.json",
-        "images/**/*.png"
-      ],
-      "icon": [
-        "icons/icon.ico"
-      ],
-      "identifier": "xyz.snow",
-      "longDescription": "LOA Logs - Modern DPS Meter for Lost Ark written in Rust.",
-      "macOS": {
-        "entitlements": null,
-        "exceptionDomain": "",
-        "frameworks": [],
-        "providerShortName": null,
-        "signingIdentity": null
-      },
-      "shortDescription": "LOA Logs",
-      "targets": [
-        "nsis",
-        "updater"
-      ],
-      "windows": {
-        "webviewInstallMode": {
-          "type": "embedBootstrapper"
+    "package": {
+        "productName": "LOA Logs",
+        "version": "1.15.0-sync"
+    },
+    "tauri": {
+        "allowlist": {
+            "all": false,
+            "window": {
+                "startDragging": true,
+                "setAlwaysOnTop": true,
+                "setIgnoreCursorEvents": true,
+                "show": true,
+                "hide": true,
+                "maximize": true,
+                "minimize": true,
+                "unminimize": true,
+                "unmaximize": true,
+                "setFocus": true
+            },
+            "clipboard": {
+                "all": true
+            },
+            "shell": {
+                "open": true
+            },
+            "process": {
+                "relaunch": true
+            },
+            "fs": {
+                "readFile": true,
+                "copyFile": true,
+                "scope": ["**"]
+            },
+            "path": {
+                "all": true
+            },
+            "protocol": {
+                "asset": true,
+                "assetScope": ["$RESOURCE/images/**/*.png"]
+            },
+            "globalShortcut": {
+                "all": true
+            },
+            "http": {
+                "all": true,
+                "request": true,
+                "scope": ["https://*"]
+            }
         },
-        "certificateThumbprint": null,
-        "digestAlgorithm": "sha256",
-        "timestampUrl": "",
-        "nsis": {
-          "license": "../LICENSE",
-          "installerIcon": "icons/icon.ico"
-        }
-      }
-    },
-    "systemTray": {
-      "iconPath": "icons/icon.png",
-      "iconAsTemplate": true
-    },
-    "security": {
-      "csp": "default-src 'self'; img-src https: data: asset: https://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
-    },
-    "updater": {
-      "active": true, 
-      "endpoints": [
-        "https://snow.xyz/loa-logs/latest.json"
-      ],
-      "dialog": false,
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZEODU5MzNEODY0ODg0REEKUldUYWhFaUdQWk9GYlczc3VSODJPK01RRTlYUER6NzU0eDE1WDYwcmJsY1d4d2EwblZHNlJ4dW8K",
-      "windows": {
-        "installMode": "passive"
-      }
-    },
-    "windows": [
-      {
-        "label": "main",
-        "title": "LOA Logs",
-        "fullscreen": false,
-        "width": 500,
-        "height": 350,
-        "resizable": true,
-        "decorations": false,
-        "transparent": true,
-        "minWidth": 400,
-        "minHeight": 120,
-        "alwaysOnTop": true,
-        "visible": false
-      },
-      {
-        "label": "logs",
-        "title": "LOA Logs",
-        "url": "logs",
-        "minWidth": 650,
-        "minHeight": 300,
-        "width": 800,
-        "height": 500,
-        "decorations": true,
-        "fileDropEnabled": false,
-        "visible": false
-      }
-    ]
-  }
+        "bundle": {
+            "active": true,
+            "category": "Utility",
+            "copyright": "GNU General Public License v3.0",
+            "resources": ["meter-data/*.json", "images/**/*.png"],
+            "icon": ["icons/icon.ico"],
+            "identifier": "xyz.snow",
+            "longDescription": "LOA Logs - Modern DPS Meter for Lost Ark written in Rust.",
+            "macOS": {
+                "entitlements": null,
+                "exceptionDomain": "",
+                "frameworks": [],
+                "providerShortName": null,
+                "signingIdentity": null
+            },
+            "shortDescription": "LOA Logs",
+            "targets": ["nsis", "updater"],
+            "windows": {
+                "webviewInstallMode": {
+                    "type": "embedBootstrapper"
+                },
+                "certificateThumbprint": null,
+                "digestAlgorithm": "sha256",
+                "timestampUrl": "",
+                "nsis": {
+                    "license": "../LICENSE",
+                    "installerIcon": "icons/icon.ico"
+                }
+            }
+        },
+        "systemTray": {
+            "iconPath": "icons/icon.png",
+            "iconAsTemplate": true
+        },
+        "security": {
+            "csp": "default-src 'self'; connect-src 'self' https://loa-moon.onrender.com; img-src https: data: asset: https://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+        },
+        "updater": {
+            "active": true,
+            "endpoints": ["https://raw.githubusercontent.com/krathus88/loa-logs/master/latest.json"],
+            "dialog": false,
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEUyMkE2ODREOTE3RjRFOUYKUldTZlRuK1JUV2dxNHRDVVJIWnU3MHpHeGpmQ0pDSjZqME0yTk9nYVJCN0VyUnczbS9vMUNFL0QR",
+            "windows": {
+                "installMode": "passive"
+            }
+        },
+        "windows": [
+            {
+                "label": "main",
+                "title": "LOA Logs",
+                "fullscreen": false,
+                "width": 500,
+                "height": 350,
+                "resizable": true,
+                "decorations": false,
+                "transparent": true,
+                "minWidth": 400,
+                "minHeight": 120,
+                "alwaysOnTop": true,
+                "visible": false
+            },
+            {
+                "label": "logs",
+                "title": "LOA Logs",
+                "url": "logs",
+                "minWidth": 650,
+                "minHeight": 300,
+                "width": 800,
+                "height": 500,
+                "decorations": true,
+                "fileDropEnabled": false,
+                "visible": false
+            }
+        ]
+    }
 }

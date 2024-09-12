@@ -22,6 +22,7 @@
     import LogIdentity from "./identity/LogIdentity.svelte";
     import LogStagger from "./stagger/LogStagger.svelte";
     import { tooltip } from "$lib/utils/tooltip";
+    import { open } from "@tauri-apps/api/shell";
     import {
         getAverageDpsChart,
         getAveragePlayerSeries,
@@ -41,6 +42,7 @@
     import LogShields from "$lib/components/logs/LogShields.svelte";
     import Rdps from "$lib/components/shared/Rdps.svelte";
     import LogSkillChart from "./LogSkillChart.svelte";
+    import { bosses as acceptedBosses, uploadLog } from "$lib/utils/sync";
 
     export let id: string;
     export let encounter: Encounter;
@@ -342,6 +344,23 @@
 
     let targetDiv: HTMLElement;
 
+    let uploading = false;
+    async function upload() {
+        if (encounter.sync || uploading) {
+            return;
+        }
+        uploading = true;
+        const encounter_sync = await invoke("load_encounter_sync", { id });
+        const uploadResult = await uploadLog([encounter_sync], [Number(id)], $settings.sync);
+        if (uploadResult !== 0) {
+            encounter.sync = uploadResult[id]["id"];
+        }
+        uploading = false;
+    }
+    function upstream() {
+        open("https://loa-moon.onrender.com/encounter/" + encounter.sync);
+    }
+
     async function captureScreenshot() {
         takingScreenshot.set(true);
         setTimeout(async () => {
@@ -466,6 +485,48 @@
                         on:click={staggerTab}>
                         Stagger
                     </button>
+                {/if}
+                {#if $settings.sync.enabled && acceptedBosses.includes(encounter.currentBossName) && $settings.sync.accessToken !== "" && encounter.cleared}
+                    {#if uploading}
+                        <button class="rounded-sm bg-gray-700 px-2 py-1" use:tooltip={{ content: "Uploading..." }}>
+                            <svg
+                                class="hover:fill-accent-800 h-5 w-5 animate-spin fill-zinc-300"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 -960 960 960">
+                                <path
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    d="M160-160v-80h110l-16-14q-52-46-73-105t-21-119q0-111 66.5-197.5T400-790v84q-72 26-116 88.5T240-478q0 45 17 87.5t53 78.5l10 10v-98h80v240H160Zm400-10v-84q72-26 116-88.5T720-482q0-45-17-87.5T650-648l-10-10v98h-80v-240h240v80H690l16 14q49 49 71.5 106.5T800-482q0 111-66.5 197.5T560-170Z" />
+                            </svg>
+                        </button>
+                    {:else if !encounter.sync}
+                        <button
+                            class="rounded-sm bg-gray-700 px-2 py-1"
+                            use:tooltip={{ content: "Sync to LOA Moon" }}
+                            on:click={upload}>
+                            <svg
+                                class="hover:fill-accent-800 h-5 w-5 fill-zinc-300"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 -960 960 960">
+                                <path
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    d="M450-313v-371L330-564l-43-43 193-193 193 193-43 43-120-120v371h-60ZM220-160q-24 0-42-18t-18-42v-143h60v143h520v-143h60v143q0 24-18 42t-42 18H220Z" />
+                            </svg>
+                        </button>
+                    {:else}
+                        <button
+                            class="rounded-sm bg-gray-700 px-2 py-1"
+                            use:tooltip={{ content: "Open on LOA Moon" }}
+                            on:click={upstream}>
+                            <svg
+                                class="hover:fill-accent-800 h-5 w-5 fill-zinc-300"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 -960 960 960">
+                                <path
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    d="m414-280 226-226-58-58-169 169-84-84-57 57 142 142ZM260-160q-91 0-155.5-63T40-377q0-78 47-139t123-78q25-92 100-149t170-57q117 0 198.5 81.5T760-520q69 8 114.5 59.5T920-340q0 75-52.5 127.5T740-160H260Zm0-80h480q42 0 71-29t29-71q0-42-29-71t-71-29h-60v-80q0-83-58.5-141.5T480-720q-83 0-141.5 58.5T280-520h-20q-58 0-99 41t-41 99q0 58 41 99t99 41Zm220-240Z" />
+                            </svg>
+                        </button>
+                    {/if}
                 {/if}
                 <button
                     class="rounded-sm bg-gray-700 px-2 py-1"
@@ -789,7 +850,7 @@
         {:else if chartType === ChartType.SKILL_LOG}
             {#if player && player.entityType === EntityType.PLAYER && hasSkillCastLog}
                 <LogSkillChart {chartOptions} {player} encounterDamageStats={encounter.encounterDamageStats} />
-            {:else if player && player.entityType === EntityType.PLAYER || focusedBoss}
+            {:else if (player && player.entityType === EntityType.PLAYER) || focusedBoss}
                 <div class="mt-2 h-[300px]" use:chartable={chartOptions} style="width: calc(100vw - 4.5rem);" />
             {/if}
         {/if}

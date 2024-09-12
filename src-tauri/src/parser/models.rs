@@ -63,6 +63,7 @@ impl FromStr for EntityType {
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Encounter {
+    pub local_id: i32,
     pub last_combat_packet: i64,
     pub fight_start: i64,
     pub local_player: String,
@@ -75,6 +76,7 @@ pub struct Encounter {
     pub favorite: bool,
     pub cleared: bool,
     pub boss_only_damage: bool,
+    pub sync: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Clone, Default)]
@@ -675,6 +677,7 @@ pub struct Settings {
     pub meter: MeterTabs,
     pub logs: LogTabs,
     pub buffs: BuffSettings,
+    pub sync: SyncSettings,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -728,6 +731,20 @@ pub struct GeneralSettings {
     pub start_on_boot: bool,
     pub logs_per_page: i32,
 }
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SyncSettings {
+    pub enabled: bool,
+    pub access_token: String,
+    pub auto: bool,
+    pub min_gear_score: String,
+    pub normal: bool,
+    pub inferno: bool,
+    pub excluded_characters: Vec<String>,
+}
+
+
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", default)]
@@ -1276,4 +1293,231 @@ fn default_true() -> bool {
 
 fn default_scale() -> String {
     "1".to_string()
+}
+
+
+lazy_static! {
+    pub static ref ALLOWED_BOSSES: HashMap<&'static str, Vec<&'static str>> = {
+        let mut map = HashMap::new();
+        // ## Legion Raids
+        // # Valtan
+        // G1
+        map.insert("Dark Mountain Predator", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Ravaged Tyrant of Beasts", vec!["Normal", "Hard","Extreme", "Inferno"]);
+        // # Vykas
+        // G1
+        map.insert("Covetous Devourer Vykas", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Covetous Legion Commander Vykas", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // # Kakul-Saydon
+        // G1
+        map.insert("Saydon", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Kakul", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G3
+        map.insert("Encore-Desiring Kakul-Saydon", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // # Brelshaza
+        // G1
+        map.insert("Gehenna Helkasirs", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Ashtarot", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G3
+        map.insert("Primordial Nightmare", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G4
+        map.insert("Phantom Legion Commander Brelshaza", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // # Akkan
+        // G1
+        map.insert("Evolved Maurug", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Lord of Degradation Akkan", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G3
+        // --- Normal
+        map.insert("Plague Legion Commander Akkan", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // --- Hard
+        map.insert("Lord of Kartheon Akkan", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // # Thaemine
+        // G1
+        map.insert("Killineza the Dark Worshipper", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Valinak, Herald of the End", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G3
+        map.insert("Thaemine the Lightqueller", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
+        map.insert("Dark Greatsword", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
+        // G4
+        map.insert("Darkness Legion Commander Thaemine", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
+        map.insert("Thaemine Prokel", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
+        map.insert("Thaemine, Conqueror of Stars", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
+        // # Echidna
+        // G1
+        map.insert("Red Doom Narkiel", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Agris", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Covetous Master Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Desire in Full Bloom, Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Alcaone, the Twisted Venom", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Agris, the Devouring Bog", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // # Behemoth
+        // G1
+        map.insert("Ashtarot", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G2
+        map.insert("Ashtarot", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+
+        // ## Abyssal Dungeons
+        // # Kayangel
+        // G1
+        map.insert("Tienis", vec!["Normal", "Hard"]);
+        // G2
+        map.insert("Prunya", vec!["Normal", "Hard"]);
+        // G3
+        map.insert("Lauriel", vec!["Normal", "Hard"]);
+        // # Ivory Tower
+        // G1
+        map.insert("Kaltaya, the Blooming Chaos", vec!["Normal", "Hard"]);
+        // G2
+        map.insert("Rakathus, the Lurking Arrogance", vec!["Normal", "Hard"]);
+        // G3
+        map.insert("Lazaram, the Trailblazer", vec!["Normal", "Hard"]);
+
+        // ## Guardian Raids
+        map.insert("Achates", vec!["Trial"]);
+        map.insert("Caliligos", vec!["Trial"]);
+        map.insert("Hanumatan", vec!["Trial"]);
+
+        map
+    };
+}
+
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default)]
+pub struct SkillSync {
+    #[serde(skip_serializing_if = "is_zero")]
+    pub total_damage: i64,
+    #[serde(skip_serializing_if = "is_empty")]
+    pub buffed_by: HashMap<u32, i64>,
+    #[serde(skip_serializing_if = "is_empty")]
+    pub debuffed_by: HashMap<u32, i64>,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub buffed_by_support: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub buffed_by_identity: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub debuffed_by_support: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub casts: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub hits: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub crits: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub back_attacks: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub front_attacks: i64,
+    #[serde(skip_serializing_if = "is_zero")]
+    pub dps: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tripod_index: Option<TripodIndex>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub tripod_level: Option<TripodLevel>,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct SkillStatsSync {
+    pub casts: i64,
+    pub hits: i64,
+    pub crits: i64,
+    pub back_attacks: i64,
+    pub front_attacks: i64,
+    pub counters: i64,
+}
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default)]
+pub struct DamageStatsSync {
+    pub damage_dealt: i64,
+    pub damage_taken: i64,
+    pub buffed_by: HashMap<u32, i64>,
+    pub debuffed_by: HashMap<u32, i64>,
+    pub buffed_by_support: i64,
+    pub buffed_by_identity: i64,
+    pub debuffed_by_support: i64,
+    pub crit_damage: i64,
+    pub back_attack_damage: i64,
+    pub front_attack_damage: i64,
+    pub shields_given_by: HashMap<u32, u64>,
+    pub damage_absorbed_on_others_by: HashMap<u32, u64>,
+    pub deaths: i64,
+    pub death_time: i64,
+    pub dps: i64,
+}
+
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase", default)]
+#[serde_as]
+pub struct EncounterMiscSync {
+    pub region: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub version: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub raid_clear: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub party_info: Option<HashMap<i32, Vec<String>>>,
+}
+
+
+#[derive(Debug, Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct EncounterDamageStatsSync {
+    pub total_damage_dealt: i64,
+    pub top_damage_dealt: i64,
+    pub total_damage_taken: i64,
+    pub top_damage_taken: i64,
+    pub dps: i64,
+    pub total_shielding: u64,
+    pub total_effective_shielding: u64,
+    pub misc: Option<EncounterMiscSync>,
+}
+
+
+#[derive(Debug, Default, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct EncounterEntitySync {
+    pub name: String,
+    pub entity_type: EntityType,
+    pub npc_id: u32,
+    pub character_id: u64,
+    pub class_id: u32,
+    pub gear_score: f32,
+    pub max_hp: i64,
+    pub is_dead: bool,
+    pub damage_stats: DamageStatsSync,
+    pub skill_stats: SkillStatsSync,
+    pub skills: HashMap<u32, SkillSync>,
+}
+
+#[derive(Debug, Serialize, Clone, Default)]
+#[serde(rename_all = "camelCase")]
+pub struct EncounterSync {
+    pub local_id: i32,
+    pub last_combat_packet: i64,
+    pub fight_start: i64,
+    pub duration: i64,
+    pub local_player: String,
+    pub current_boss_name: String,
+    pub difficulty: Option<String>,
+    pub encounter_damage_stats: EncounterDamageStatsSync,
+    pub entities: HashMap<String, EncounterEntitySync>,
+}
+
+// Helper functions to check for zero and empty values
+fn is_zero(val: &i64) -> bool {
+    *val == 0
+}
+
+fn is_empty<T>(val: &HashMap<u32, T>) -> bool {
+    val.is_empty()
 }

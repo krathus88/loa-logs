@@ -22,6 +22,7 @@ export interface Encounter {
     favorite: boolean;
     cleared: boolean;
     bossOnlyDamage: boolean;
+    sync?: number;
 }
 
 export interface EncountersOverview {
@@ -343,7 +344,6 @@ export enum ShieldTab {
     E_RECEIVED
 }
 
-
 export interface ClassMap {
     [key: number]: string;
 }
@@ -465,8 +465,8 @@ export class SearchFilter {
 }
 
 export interface PartyBuffs {
-    parties: Array<Array<Entity>>,
-    partyGroupedSynergies: Map<string, Set<string>>,
-    partyPercentages: Array<number[]>,
-    partyBuffs: Map<string, Map<string, Array<BuffDetails>>>,
+    parties: Array<Array<Entity>>;
+    partyGroupedSynergies: Map<string, Set<string>>;
+    partyPercentages: Array<number[]>;
+    partyBuffs: Map<string, Map<string, Array<BuffDetails>>>;
 }

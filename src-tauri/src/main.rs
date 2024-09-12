@@ -121,10 +121,10 @@ async fn main() -> Result<()> {
             meter_window
                 .restore_state(WINDOW_STATE_FLAGS)
                 .expect("failed to restore window state");
-            // #[cfg(debug_assertions)]
-            // {
-            //     meter_window.open_devtools();
-            // }
+            /* #[cfg(debug_assertions)]
+            {
+                 meter_window.open_devtools();
+            } */
 
             let logs_window = app.get_window(LOGS_WINDOW_LABEL).unwrap();
             logs_window
@@ -321,6 +321,7 @@ async fn main() -> Result<()> {
         .invoke_handler(tauri::generate_handler![
             load_encounters_preview,
             load_encounter,
+            load_encounter_sync,
             get_encounter_count,
             open_most_recent_encounter,
             delete_encounter,
@@ -329,6 +330,7 @@ async fn main() -> Result<()> {
             toggle_logs_window,
             open_url,
             save_settings,
+            sync,
             get_settings,
             open_folder,
             open_db_path,
@@ -347,6 +349,7 @@ async fn main() -> Result<()> {
             optimize_database,
             check_start_on_boot,
             set_start_on_boot,
+            get_sync_candidates,
         ])
         .run(tauri::generate_context!())
         .expect("error while running application");
@@ -385,9 +388,27 @@ fn setup_db(resource_path: &Path) -> Result<(), rusqlite::Error> {
         migration_legacy_entity(&tx)?;
         migration_full_text_search(&tx)?;
     }
+
+    // Sync
+    migration_sync(&tx)?;
+
     stmt.finalize()?;
     info!("finished setting up database");
     tx.commit()
+}
+
+fn migration_sync(tx: &Transaction) -> Result<(), rusqlite::Error> {
+    tx.execute_batch(
+        "
+        CREATE TABLE IF NOT EXISTS sync (
+            encounter_id INTEGER PRIMARY KEY,
+            upstream_id INTEGER,
+            failed BOOLEAN NOT NULL DEFAULT false,
+            is_valid BOOLEAN NOT NULL DEFAULT true,
+            FOREIGN KEY (encounter_id) REFERENCES encounter (id) ON DELETE CASCADE
+        );
+        ",
+    )
 }
 
 fn migration_legacy_encounter(tx: &Transaction) -> Result<(), rusqlite::Error> {
@@ -1009,6 +1030,254 @@ fn load_encounter(window: tauri::Window, id: String) -> Encounter {
     encounter.entities = entities;
 
     encounter
+}
+
+#[tauri::command(async)]
+fn load_encounter_sync(window: tauri::Window, id: String) -> EncounterSync {
+    let path = window
+        .app_handle()
+        .path_resolver()
+        .resource_dir()
+        .expect("could not get resource dir");
+    let conn = get_db_connection(&path).expect("could not get db connection");
+    let mut encounter_stmt = conn
+        .prepare_cached(
+            "
+    SELECT last_combat_packet,
+       fight_start,
+       local_player,
+       current_boss,
+       duration,
+       total_damage_dealt,
+       top_damage_dealt,
+       total_damage_taken,
+       top_damage_taken,
+       dps,
+       buffs,
+       debuffs,
+       misc,
+       difficulty,
+       favorite,
+       cleared,
+       boss_only_damage,
+       total_shielding,
+       total_effective_shielding,
+       applied_shield_buffs,
+       boss_hp_log,
+       stagger_log,
+       id
+    FROM encounter JOIN encounter_preview USING (id)
+    WHERE id = ?
+    ",
+        )
+        .unwrap();
+
+    let mut compressed = false;
+    let mut encounter = encounter_stmt
+        .query_row(params![id], |row| {
+            let misc_str: String = row.get(12).unwrap_or_default();
+            let misc = serde_json::from_str::<EncounterMiscSync>(misc_str.as_str())
+                .map(Some)
+                .unwrap_or_default();
+
+
+            if let Some(misc) = misc.as_ref() {
+                let version = misc
+                    .version
+                    .clone()
+                    .unwrap_or_default()
+                    .split('.')
+                    .map(|x| x.parse::<i32>().unwrap_or_default())
+                    .collect::<Vec<_>>();
+
+                if version[0] > 1
+                    || (version[0] == 1 && version[1] >= 14)
+                    || (version[0] == 1 && version[1] == 13 && version[2] >= 5)
+                {
+                    compressed = true;
+                }
+
+            }
+
+            let total_shielding = row.get(17).unwrap_or_default();
+            let total_effective_shielding = row.get(18).unwrap_or_default();
+
+            Ok(EncounterSync {
+                local_id: row.get(22)?,
+                last_combat_packet: row.get(0)?,
+                fight_start: row.get(1)?,
+                local_player: row.get(2).unwrap_or("You".to_string()),
+                current_boss_name: row.get(3)?,
+                duration: row.get(4)?,
+                encounter_damage_stats: EncounterDamageStatsSync {
+                    total_damage_dealt: row.get(5)?,
+                    top_damage_dealt: row.get(6)?,
+                    total_damage_taken: row.get(7)?,
+                    top_damage_taken: row.get(8)?,
+                    dps: row.get(9)?,
+                    total_shielding,
+                    total_effective_shielding,
+                    misc,
+                    ..Default::default()
+                },
+                difficulty: row.get(13)?,
+                ..Default::default()
+            })
+        })
+        .unwrap_or_else(|_| EncounterSync::default());
+
+    let mut entity_stmt = conn
+        .prepare_cached(
+            "
+    SELECT name,
+        character_id,
+        class_id,
+        class,
+        gear_score,
+        current_hp,
+        max_hp,
+        is_dead,
+        skills,
+        damage_stats,
+        skill_stats,
+        last_update,
+        entity_type,
+        npc_id
+    FROM entity
+    WHERE encounter_id = ?;
+    ",
+        )
+        .unwrap();
+
+    let entity_iter = entity_stmt
+        .query_map(params![id], |row| {
+            let skills: HashMap<u32, SkillSync>;
+            let damage_stats: DamageStatsSync;
+
+            if compressed {
+                let raw_bytes: Vec<u8> = row.get(8).unwrap_or_default();
+                let mut decompress = GzDecoder::new(raw_bytes.as_slice());
+                let mut skill_string = String::new();
+                decompress
+                    .read_to_string(&mut skill_string)
+                    .expect("could not decompress skills");
+                skills = serde_json::from_str::<HashMap<u32, SkillSync>>(skill_string.as_str())
+                    .unwrap_or_default();
+
+                let raw_bytes: Vec<u8> = row.get(9).unwrap_or_default();
+                let mut decompress = GzDecoder::new(raw_bytes.as_slice());
+                let mut damage_stats_string = String::new();
+                decompress
+                    .read_to_string(&mut damage_stats_string)
+                    .expect("could not decompress damage stats");
+                damage_stats = serde_json::from_str::<DamageStatsSync>(damage_stats_string.as_str())
+                    .unwrap_or_default();
+            } else {
+                let skill_str: String = row.get(8).unwrap_or_default();
+                skills = serde_json::from_str::<HashMap<u32, SkillSync>>(skill_str.as_str())
+                    .unwrap_or_default();
+
+                let damage_stats_str: String = row.get(9).unwrap_or_default();
+                damage_stats = serde_json::from_str::<DamageStatsSync>(damage_stats_str.as_str())
+                    .unwrap_or_default();
+            }
+
+            let skill_stats_str: String = row.get(10).unwrap_or_default();
+            let skill_stats =
+                serde_json::from_str::<SkillStatsSync>(skill_stats_str.as_str()).unwrap_or_default();
+
+            let entity_type: String = row.get(12).unwrap_or_default();
+
+            Ok(EncounterEntitySync {    
+                name: row.get(0)?,
+                npc_id: row.get(13)?,
+                character_id: row.get(1)?,
+                class_id: row.get(2)?,
+                gear_score: row.get(4)?,
+                max_hp: row.get(6)?,
+                is_dead: row.get(7)?,
+                skills,
+                damage_stats,
+                skill_stats,
+                entity_type: EntityType::from_str(entity_type.as_str())
+                    .unwrap_or(EntityType::UNKNOWN),
+                ..Default::default()
+            })
+        })
+        .unwrap();
+
+    let mut entities: HashMap<String, EncounterEntitySync> = HashMap::new();
+    for entity in entity_iter.flatten() {
+        entities.insert(entity.name.to_string(), entity);
+    }
+
+    encounter.entities = entities;
+
+    encounter
+}
+
+#[tauri::command]
+fn get_sync_candidates(window: tauri::Window) -> Vec<i32> {
+    let path = window
+        .app_handle()
+        .path_resolver()
+        .resource_dir()
+        .expect("could not get resource dir");
+    let conn = get_db_connection(&path).expect("could not get db connection");
+
+    let mut stmt = conn
+        .prepare_cached(
+            "
+        SELECT id, current_boss, difficulty
+        FROM encounter_preview
+        LEFT JOIN sync ON encounter_id = id
+        WHERE cleared = true
+            AND (sync.upstream_id IS NULL AND sync.is_valid = true OR sync.encounter_id IS NULL)
+            AND difficulty IS NOT NULL
+        ORDER BY fight_start;
+                "
+        )
+        .unwrap();
+
+    // Execute the statement and map the rows
+    let rows = stmt.query_map([], |row| {
+        // Unwrap the Result and handle the String values properly
+        let id = row.get::<_, i32>(0).unwrap_or(0);
+        let boss: String = row.get(1).unwrap_or_default();
+        let difficulty: String = row.get(2).unwrap_or_default();
+        Ok((id, boss, difficulty))
+    }).unwrap();
+
+    // Collect all results and filter them based on the allowed difficulties
+    let mut filtered_ids = Vec::new();
+    for row in rows {
+        if let Ok((id, boss, difficulty)) = row {
+            if let Some(allowed) = ALLOWED_BOSSES.get(boss.as_str()) {
+                if allowed.contains(&difficulty.as_str()) {
+                    filtered_ids.push(id);
+                }
+            }
+        }
+    }
+    
+    filtered_ids
+}
+
+#[tauri::command]
+fn sync(window: tauri::Window, encounter: i32, upstream: Option<i32>, failed: bool, isValid: bool) {
+    let path = window
+        .app_handle()
+        .path_resolver()
+        .resource_dir()
+        .expect("could not get resource dir");
+    let conn = get_db_connection(&path).expect("could not get db connection");
+
+    conn.execute(
+        "
+        INSERT OR REPLACE INTO sync (encounter_id, upstream_id, failed, is_valid)
+        VALUES(?, ?, ?, ?);
+        ",
+        params![encounter, upstream, failed, isValid]).unwrap();
 }
 
 #[tauri::command]
