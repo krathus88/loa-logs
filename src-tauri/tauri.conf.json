@@ -90,13 +90,13 @@
             "iconAsTemplate": true
         },
         "security": {
-            "csp": "default-src 'self'; img-src https: data: asset: https://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
+            "csp": "default-src 'self'; connect-src 'self' https://loa-moon.onrender.com; img-src https: data: asset: https://asset.localhost; style-src 'self' 'unsafe-inline'; font-src 'self' data:"
         },
         "updater": {
             "active": true,
-            "endpoints": ["https://snow.xyz/loa-logs/latest.json"],
+            "endpoints": ["https://raw.githubusercontent.com/krathus88/loa-logs/master/latest.json"],
             "dialog": false,
-            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDZEODU5MzNEODY0ODg0REEKUldUYWhFaUdQWk9GYlczc3VSODJPK01RRTlYUER6NzU0eDE1WDYwcmJsY1d4d2EwblZHNlJ4dW8K",
+            "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDI2ODhDNUQyODNGODY5NDYKUldSR2FmaUQwc1dJSnJBWGcwL3JVWStQdWtWWUxWNkNlTmdkWDF6WnlQOVVMVk1CUGZrWlI3dnUK",
             "windows": {
                 "installMode": "passive"
             }

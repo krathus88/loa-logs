@@ -1361,9 +1361,13 @@ lazy_static! {
         map.insert("Agris, the Devouring Bog", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // # Behemoth
         // G1
-        map.insert("Ashtarot", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Behemoth, the Storm Commander", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Despicable Skolakia", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Untrue Crimson Yoho", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Ruthless Lakadroff", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Vicious Argeos", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // G2
-        map.insert("Ashtarot", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        map.insert("Behemoth, Cruel Storm Slayer", vec!["Normal", "Hard", "Extreme", "Inferno"]);
 
         // ## Abyssal Dungeons
         // # Kayangel

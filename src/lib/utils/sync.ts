@@ -39,7 +39,13 @@ export const bosses = [
     "Sonavel",
     "Hanumatan",
     "Kungelanium",
-    "Deskaluda"
+    "Deskaluda",
+    "Behemoth, the Storm Commander",
+    "Despicable Skolakia",
+    "Untrue Crimson Yoho",
+    "Ruthless Lakadroff",
+    "Vicious Argeos",
+    "Behemoth, Cruel Storm Slayer"
 ];
 
 export async function uploadLog(encounter: any[], ids_batch: number[], settings: any) {
