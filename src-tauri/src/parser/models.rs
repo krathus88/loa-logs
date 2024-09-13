@@ -63,7 +63,6 @@ impl FromStr for EntityType {
 #[derive(Debug, Serialize, Clone, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct Encounter {
-    pub local_id: i32,
     pub last_combat_packet: i64,
     pub fight_start: i64,
     pub local_player: String,
@@ -76,7 +75,6 @@ pub struct Encounter {
     pub favorite: bool,
     pub cleared: bool,
     pub boss_only_damage: bool,
-    pub sync: Option<i32>,
 }
 
 #[derive(Debug, Serialize, Clone, Default)]
@@ -1362,10 +1360,6 @@ lazy_static! {
         // # Behemoth
         // G1
         map.insert("Behemoth, the Storm Commander", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Despicable Skolakia", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Untrue Crimson Yoho", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Ruthless Lakadroff", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Vicious Argeos", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // G2
         map.insert("Behemoth, Cruel Storm Slayer", vec!["Normal", "Hard", "Extreme", "Inferno"]);
 
@@ -1484,6 +1478,7 @@ pub struct EncounterDamageStatsSync {
     pub dps: i64,
     pub total_shielding: u64,
     pub total_effective_shielding: u64,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub misc: Option<EncounterMiscSync>,
 }
 

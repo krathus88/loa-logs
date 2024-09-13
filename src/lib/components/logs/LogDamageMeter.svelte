@@ -352,7 +352,7 @@
         uploading = true;
         const encounter_sync = await invoke("load_encounter_sync", { id });
         const uploadResult = await uploadLog([encounter_sync], [Number(id)], $settings.sync);
-        if (uploadResult !== 0) {
+        if (uploadResult) {
             encounter.sync = uploadResult[id]["id"];
         }
         uploading = false;

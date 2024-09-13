@@ -52,7 +52,9 @@
         synced = 0;
         const ids = await invoke("get_sync_candidates", {});
 
-        const BATCH_SIZE = 15; // Maximum number of encounters per batch
+        const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+        const DELAY_TIME = 2500; // Milliseconds -- Delay Time between mass upload requests
+        const BATCH_SIZE = 40; // Maximum number of encounters per batch
         let log_counter = 0;
         let encounters: any[] = []; // Temporary array to hold encounters
         let ids_batch: number[] = [];
@@ -71,40 +73,45 @@
                 encounters = [];
                 ids_batch = [];
 
-                for (const key in encountersInfo) {
-                    log_counter++;
+                // If encountersInfo returns data instead of null
+                if (encountersInfo) {
+                    for (const key in encountersInfo) {
+                        log_counter++;
 
-                    const upstream = encountersInfo[key].id;
-                    const is_success = encountersInfo[key].success;
-                    const is_valid = encountersInfo[key].is_valid;
-                    if (is_success === null || is_valid === null) {
-                        break;
+                        const upstream = encountersInfo[key].id;
+                        const is_success = encountersInfo[key].success;
+                        const is_valid = encountersInfo[key].is_valid;
+                        if (is_success === null || is_valid === null) {
+                            break;
+                        }
+                        if (is_success === true && is_valid === true) {
+                            synced++;
+
+                            await invoke("write_log", {
+                                message: "Uploaded encounter " + key + " upstream: " + upstream
+                            });
+                        } else if (is_valid === false) {
+                            await invoke("write_log", {
+                                message: "Encounter " + key + " is not valid."
+                            });
+                        } else if (is_success === false) {
+                            await invoke("write_log", {
+                                message: "Failed to upload encounter " + key
+                            });
+                        }
+
+                        await invoke("sync", {
+                            encounter: Number(key),
+                            upstream: upstream,
+                            failed: is_success,
+                            isValid: is_valid
+                        });
+
+                        message = "Processing logs... (" + log_counter + "/" + ids.length + ")";
                     }
-                    if (is_success === true && is_valid === true) {
-                        synced++;
-
-                        await invoke("write_log", {
-                            message: "Uploaded encounter " + key + " upstream: " + upstream
-                        });
-                    } else if (is_valid === false) {
-                        await invoke("write_log", {
-                            message: "Encounter " + key + " is not valid."
-                        });
-                    } else if (is_success === false) {
-                        await invoke("write_log", {
-                            message: "Failed to upload encounter " + key
-                        });
-                    }
-
-                    await invoke("sync", {
-                        encounter: Number(key),
-                        upstream: upstream,
-                        failed: is_success,
-                        isValid: is_valid
-                    });
-
-                    message = "Processing logs... (" + log_counter + "/" + ids.length + ")";
                 }
+
+                await delay(DELAY_TIME);
             }
         }
 

@@ -41,10 +41,6 @@ export const bosses = [
     "Kungelanium",
     "Deskaluda",
     "Behemoth, the Storm Commander",
-    "Despicable Skolakia",
-    "Untrue Crimson Yoho",
-    "Ruthless Lakadroff",
-    "Vicious Argeos",
     "Behemoth, Cruel Storm Slayer"
 ];
 
@@ -72,7 +68,7 @@ export async function uploadLog(encounter: any[], ids_batch: number[], settings:
         await invoke("write_log", {
             message: `Couldn't upload encounters: ${ids_batch.join(", ")} due to end server issues. - error: ${error}`
         });
-        return 0;
+        return null;
     }
 
     const body = await resp.json();
@@ -84,7 +80,7 @@ export async function uploadLog(encounter: any[], ids_batch: number[], settings:
         for (const id of ids_batch) {
             await invoke("sync", { encounter: Number(id), upstream: 0, failed: true, isValid: true });
         }
-        return 0;
+        return null;
     }
 
     return body.encounters_info;
