@@ -1,11 +1,39 @@
 <div class="rounded-md flex space-x-2 items-center">
   <div class="text-lg font-semibold text-white">
-    v1.16.2-sync
+    v1.16.4-sync
   </div>
   <div class="bg-accent-500 px-2 font-medium rounded-md text-white">
     New
   </div>
 </div>
+
+#### NEW FEATURES
+
+-   updated app icon
+-   added quick setting toggles to logs
+
+![toggles](https://i.imgur.com/roxHSBM.png)
+
+-   added death counts
+
+![death_counts](https://i.imgur.com/dAwztWg.png)
+
+#### BUG FIXES AND IMPROVEMENTS
+
+-   added esthers to split party view (oops i forgot them initially)
+-   fix searching by class
+
+### v1.16.3
+
+#### NEW FEATURES
+
+-   added party split damage option for logs only (settings > logs > split party damage: default ON)
+
+#### BUG FIXES AND IMPROVEMENTS
+
+-   fix add in akkan raid counting as boss
+
+### v1.16.2
 
 #### BUG FIXES AND IMPROVEMENTS
 

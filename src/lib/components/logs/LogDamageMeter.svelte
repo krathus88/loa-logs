@@ -1,5 +1,13 @@
 <script lang="ts">
-    import { MeterState, MeterTab, type Entity, type Encounter, ChartType, EntityType } from "$lib/types";
+    import {
+        MeterState,
+        MeterTab,
+        type Entity,
+        type Encounter,
+        ChartType,
+        EntityType,
+        type PartyInfo
+    } from "$lib/types";
     import { formatTimestampDate, millisToMinutesAndSeconds } from "$lib/utils/numbers";
     import { invoke } from "@tauri-apps/api/tauri";
     import LogDamageMeterRow from "./LogDamageMeterRow.svelte";
@@ -42,6 +50,8 @@
     import LogShields from "$lib/components/logs/LogShields.svelte";
     import Rdps from "$lib/components/shared/Rdps.svelte";
     import LogSkillChart from "./LogSkillChart.svelte";
+    import LogDamageMeterPartySplit from "./LogDamageMeterPartySplit.svelte";
+    import LogDamageMeterHeader from "./LogDamageMeterHeader.svelte";
     import { bosses as acceptedBosses, uploadLog } from "$lib/utils/sync";
 
     export let id: string;
@@ -55,14 +65,14 @@
     let totalDamageDealt = 0;
     let localPlayerEntity: Entity | null = null;
 
-    let anyDead: boolean;
+    let anyDead: boolean = false;
+    let multipleDeaths: boolean = false;
     let anyFrontAtk: boolean = false;
     let anyBackAtk: boolean = false;
     let anySupportBuff: boolean = false;
     let anySupportIdentity: boolean = false;
     let anySupportBrand: boolean = false;
     let anyRdpsData: boolean = false;
-
     let isSolo = true;
 
     let state = MeterState.PARTY;
@@ -76,6 +86,8 @@
     let deleteConfirm = false;
 
     let chartOptions: EChartsOptions = {};
+
+    let encounterPartyInfo: PartyInfo | undefined = undefined;
 
     $: {
         if (encounter) {
@@ -105,11 +117,13 @@
             topDamageDealt = encounter.encounterDamageStats.topDamageDealt;
             playerDamagePercentages = players.map((player) => (player.damageStats.damageDealt / topDamageDealt) * 100);
             anyDead = players.some((player) => player.isDead);
+            multipleDeaths = players.some((player) => player.damageStats.deaths > 1);
             anyFrontAtk = players.some((player) => player.skillStats.frontAttacks > 0);
             anyBackAtk = players.some((player) => player.skillStats.backAttacks > 0);
             anySupportBuff = players.some((player) => player.damageStats.buffedBySupport > 0);
             anySupportIdentity = players.some((player) => player.damageStats.buffedByIdentity > 0);
             anySupportBrand = players.some((player) => player.damageStats.debuffedBySupport > 0);
+            encounterPartyInfo = encounter.encounterDamageStats.misc?.partyInfo;
             if (
                 encounter.encounterDamageStats.misc?.rdpsValid === undefined ||
                 encounter.encounterDamageStats.misc?.rdpsValid
@@ -238,6 +252,8 @@
         state = MeterState.PLAYER;
         playerName = name;
         chartType = ChartType.SKILL_LOG;
+
+        scrollToTop();
     }
 
     function inspectBoss(name: string) {
@@ -553,7 +569,7 @@
                     </button>
                     {#if dropdownOpen}
                         <div class="absolute left-9 top-0 z-50 rounded-md bg-gray-700">
-                            <div class="flex w-40 flex-col divide-y-2 divide-gray-600 px-2 py-1">
+                            <div class="flex w-48 flex-col divide-y-2 divide-gray-600 px-2 py-1">
                                 <button
                                     class="hover:text-accent-500 p-1 text-left"
                                     on:click={() => {
@@ -570,6 +586,30 @@
                                             value=""
                                             class="peer sr-only"
                                             bind:checked={$settings.general.showNames} />
+                                        <div
+                                            class="peer-checked:bg-accent-800 peer h-5 w-9 rounded-full border-gray-600 bg-gray-800 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
+                                    </label>
+                                </button>
+                                <button class="flex items-center justify-between bg-gray-700 p-1">
+                                    <span class="text-sm">Split Party Damage</span>
+                                    <label class="relative inline-flex cursor-pointer items-center">
+                                        <input
+                                            type="checkbox"
+                                            value=""
+                                            class="peer sr-only"
+                                            bind:checked={$settings.logs.splitPartyDamage} />
+                                        <div
+                                            class="peer-checked:bg-accent-800 peer h-5 w-9 rounded-full border-gray-600 bg-gray-800 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
+                                    </label>
+                                </button>
+                                <button class="flex items-center justify-between bg-gray-700 p-1">
+                                    <span class="text-sm">Show Esther</span>
+                                    <label class="relative inline-flex cursor-pointer items-center">
+                                        <input
+                                            type="checkbox"
+                                            value=""
+                                            class="peer sr-only"
+                                            bind:checked={$settings.general.showEsther} />
                                         <div
                                             class="peer-checked:bg-accent-800 peer h-5 w-9 rounded-full border-gray-600 bg-gray-800 after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-full peer-checked:after:border-white peer-focus:outline-none" />
                                     </label>
@@ -658,93 +698,70 @@
         <div class="px relative top-0 overflow-x-auto overflow-y-visible">
             {#if tab === MeterTab.DAMAGE}
                 {#if state === MeterState.PARTY}
-                    <table class="relative w-full table-fixed">
-                        <thead
-                            class="z-30 h-6"
-                            on:contextmenu|preventDefault={() => {
-                                console.log("titlebar clicked");
-                            }}>
-                            <tr class="bg-zinc-900">
-                                <th class="w-7 px-2 font-normal" />
-                                <th class="w-14 px-2 text-left font-normal" />
-                                <th class="w-full" />
-                                {#if anyDead && $settings.logs.deathTime}
-                                    <th class="w-16 font-normal" use:tooltip={{ content: "Dead for" }}>Dead for</th>
-                                {/if}
-                                {#if $settings.logs.damage}
-                                    <th class="w-14 font-normal" use:tooltip={{ content: "Damage Dealt" }}>DMG</th>
-                                {/if}
-                                {#if $settings.logs.dps}
-                                    <th class="w-14 font-normal" use:tooltip={{ content: "Damage per second" }}>DPS</th>
-                                {/if}
-                                {#if !isSolo && $settings.logs.damagePercent}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "Damage %" }}>D%</th>
-                                {/if}
-                                {#if $settings.logs.critRate}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "Crit %" }}>CRIT</th>
-                                {/if}
-                                {#if $settings.logs.critDmg}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "% Damage that Crit" }}
-                                        >CDMG
-                                    </th>
-                                {/if}
-                                {#if anyFrontAtk && $settings.logs.frontAtk}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "Front Attack %" }}>F.A</th>
-                                {/if}
-                                {#if anyBackAtk && $settings.logs.backAtk}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "Back Attack %" }}>B.A</th>
-                                {/if}
-                                {#if anySupportBuff && $settings.logs.percentBuffBySup}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "% Damage buffed by Support" }}
-                                        >Buff%
-                                    </th>
-                                {/if}
-                                {#if anySupportBrand && $settings.logs.percentBrand}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "% Damage buffed by Brand" }}
-                                        >B%
-                                    </th>
-                                {/if}
-                                {#if anySupportIdentity && $settings.logs.percentIdentityBySup}
-                                    <th
-                                        class="w-12 font-normal"
-                                        use:tooltip={{ content: "% Damage buffed by Support Identity" }}
-                                        >Iden%
-                                    </th>
-                                {/if}
-                                {#if anyRdpsData && $settings.logs.ssyn}
-                                    <th
-                                        class="w-12 font-normal"
-                                        use:tooltip={{ content: "% Damage gained from Support" }}
-                                        >sSyn%
-                                    </th>
-                                {/if}
-                                {#if $settings.logs.counters}
-                                    <th class="w-12 font-normal" use:tooltip={{ content: "Counters" }}>CTR</th>
-                                {/if}
-                            </tr>
-                        </thead>
-                        <tbody class="relative z-10">
-                            {#each players as player, i (player.name)}
-                                <tr
-                                    class="h-7 px-2 py-1 {$settings.general.underlineHovered ? 'hover:underline' : ''}"
-                                    on:click={() => inspectPlayer(player.name)}>
-                                    <LogDamageMeterRow
-                                        entity={player}
-                                        percentage={playerDamagePercentages[i]}
-                                        {totalDamageDealt}
+                    {#if $settings.logs.splitPartyDamage && encounterPartyInfo && Object.keys(encounterPartyInfo).length >= 2}
+                        <LogDamageMeterPartySplit
+                            {players}
+                            {encounterPartyInfo}
+                            {topDamageDealt}
+                            {totalDamageDealt}
+                            {anyFrontAtk}
+                            {anyBackAtk}
+                            {anySupportBuff}
+                            {anySupportIdentity}
+                            {anySupportBrand}
+                            {anyRdpsData}
+                            end={encounter.lastCombatPacket}
+                            {isSolo}
+                            {inspectPlayer} />
+                    {:else}
+                        <table class="relative w-full table-fixed">
+                            <thead
+                                class="z-30 h-6"
+                                on:contextmenu|preventDefault={() => {
+                                    console.log("titlebar clicked");
+                                }}>
+                                <tr class="bg-zinc-900">
+                                    <th class="w-7 px-2 font-normal" />
+                                    <th class="w-14 px-2 text-left font-normal" />
+                                    <th class="w-full" />
+                                    <LogDamageMeterHeader
                                         {anyDead}
+                                        {multipleDeaths}
                                         {anyFrontAtk}
                                         {anyBackAtk}
                                         {anySupportBuff}
                                         {anySupportIdentity}
                                         {anySupportBrand}
                                         {anyRdpsData}
-                                        end={encounter.lastCombatPacket}
                                         {isSolo} />
                                 </tr>
-                            {/each}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody class="relative z-10">
+                                {#each players as player, i (player.name)}
+                                    <tr
+                                        class="h-7 px-2 py-1 {$settings.general.underlineHovered
+                                            ? 'hover:underline'
+                                            : ''}"
+                                        on:click={() => inspectPlayer(player.name)}>
+                                        <LogDamageMeterRow
+                                            entity={player}
+                                            percentage={playerDamagePercentages[i]}
+                                            {totalDamageDealt}
+                                            {anyDead}
+                                            {multipleDeaths}
+                                            {anyFrontAtk}
+                                            {anyBackAtk}
+                                            {anySupportBuff}
+                                            {anySupportIdentity}
+                                            {anySupportBrand}
+                                            {anyRdpsData}
+                                            end={encounter.lastCombatPacket}
+                                            {isSolo} />
+                                    </tr>
+                                {/each}
+                            </tbody>
+                        </table>
+                    {/if}
                 {:else if state === MeterState.PLAYER && player !== null}
                     <table class="relative w-full table-fixed">
                         <LogPlayerBreakdown entity={player} duration={encounter.duration} {totalDamageDealt} />
@@ -761,7 +778,7 @@
                     {players}
                     totalDamageDealt={encounter.encounterDamageStats.totalDamageDealt}
                     duration={encounter.duration}
-                    encounterPartyInfo={encounter.encounterDamageStats.misc?.partyInfo} />
+                    {encounterPartyInfo} />
             {:else if tab === MeterTab.PARTY_BUFFS}
                 {#if state === MeterState.PARTY}
                     <LogBuffs {tab} encounterDamageStats={encounter.encounterDamageStats} {players} {inspectPlayer} />

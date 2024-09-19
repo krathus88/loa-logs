@@ -7,7 +7,6 @@ import {
     MiniSkill,
     type SkillCast,
     type EncounterDamageStats,
-    type SkillHit,
     type SkillChartSupportDamage,
     type SkillChartModInfo
 } from "$lib/types";
@@ -27,8 +26,6 @@ import { bossHpMap } from "$lib/constants/bossHpBars";
 import { classesMap } from "$lib/constants/classes";
 import BTree from "sorted-btree";
 import { getFormattedBuffString, getSkillCastBuffs } from "./buffs";
-import { identity } from "lodash-es";
-import { tooltip } from "./tooltip";
 import { focusedSkillCast } from "./stores";
 
 export function getLegendNames(chartablePlayers: Entity[], showNames: boolean) {
@@ -207,8 +204,10 @@ export function getAverageDpsChart(
                 const bossTooltips: string[] = [];
                 const tree = new BTree(undefined, (a, b) => b - a);
                 const length = Object.keys(chartablePlayers).length;
-                params.forEach((param) => generateTooltip(param, bossTooltips, tree, deathTimes, time, length));
-                tooltipStr += bossTooltips.join("") + tree.valuesArray().join("") + "</div>";
+                const totalDps = { value: 0 };
+                params.forEach((param) => generateTooltip(param, bossTooltips, totalDps, tree, deathTimes, time, length));
+                const totalDpsString = `<div style="display:flex; justify-content: space-between;font-weight: 600;"><div style="padding-right: 1rem">Total DPS</div><div style="">${abbreviateNumber(totalDps.value)}</div></div>`;
+                tooltipStr += bossTooltips.join("") + totalDpsString + tree.valuesArray().join("") + "</div>";
                 return tooltipStr;
             }
         },
@@ -287,8 +286,10 @@ export function getRollingDpsChart(
                 const bossTooltips: string[] = [];
                 const length = Object.keys(chartablePlayers).length;
                 const tree = new BTree(undefined, (a, b) => b - a);
-                params.forEach((param) => generateTooltip(param, bossTooltips, tree, deathTimes, time, length));
-                tooltipStr += bossTooltips.join("") + tree.valuesArray().join("") + "</div>";
+                const totalDps = { value: 0 };
+                params.forEach((param) => generateTooltip(param, bossTooltips, totalDps, tree, deathTimes, time, length));
+                const totalDpsString = `<div style="display:flex; justify-content: space-between;font-weight: 600;"><div style="padding-right: 1rem">Total DPS</div><div style="">${abbreviateNumber(totalDps.value)}</div></div>`;
+                tooltipStr += bossTooltips.join("") + totalDpsString + tree.valuesArray().join("") + "</div>";
                 return tooltipStr;
             }
         },
@@ -633,6 +634,7 @@ export function getOpenerSkills(skills: MiniSkill[], x: number): OpenerSkill[] {
 function generateTooltip(
     param: any,
     bossTooltips: string[],
+    totalDps: { value: number; },
     tree: BTree,
     deathTimes: { [key: string]: number },
     time: string,
@@ -655,6 +657,7 @@ function generateTooltip(
             label = "💀 " + label;
         }
         const dps = Number(value);
+        totalDps.value += dps;
         value = abbreviateNumber(value);
         label =
             `<span style="display:inline-block;margin-right:5px;border-radius:10px;width:10px;height:10px;background-color:${param.color}"></span>` +
