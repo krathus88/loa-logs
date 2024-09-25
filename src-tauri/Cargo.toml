@@ -40,6 +40,7 @@ auto-launch = "0.5.0"
 rsntp = { version = "4.0.0", default-features = false, features = ["chrono"]  }
 flate2 = "1.0.30"
 meter-core = { path = "E:\\Projects\\meter-core-rs\\" }
+sysinfo = "0.31.4"
 
 [features]
 # by default Tauri runs in production mode
