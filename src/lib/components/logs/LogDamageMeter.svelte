@@ -117,7 +117,11 @@
             topDamageDealt = encounter.encounterDamageStats.topDamageDealt;
             playerDamagePercentages = players.map((player) => (player.damageStats.damageDealt / topDamageDealt) * 100);
             anyDead = players.some((player) => player.isDead);
-            multipleDeaths = players.some((player) => player.damageStats.deaths > 1);
+            if (!anyDead) {
+                multipleDeaths = players.some((player) => player.damageStats.deaths > 0);
+            } else {
+                multipleDeaths = players.some((player) => player.damageStats.deaths > 1);
+            }
             anyFrontAtk = players.some((player) => player.skillStats.frontAttacks > 0);
             anyBackAtk = players.some((player) => player.skillStats.backAttacks > 0);
             anySupportBuff = players.some((player) => player.damageStats.buffedBySupport > 0);
@@ -852,13 +856,7 @@
                 {/if}
             </div>
         {/if}
-        {#if chartType === ChartType.AVERAGE_DPS}
-            {#if !$settings.general.showNames}
-                <div class="mt-2 h-[300px]" use:chartable={chartOptions} style="width: calc(100vw - 4.5rem);" />
-            {:else}
-                <div class="mt-2 h-[300px]" use:chartable={chartOptions} style="width: calc(100vw - 4.5rem);" />
-            {/if}
-        {:else if chartType === ChartType.ROLLING_DPS}
+        {#if chartType === ChartType.AVERAGE_DPS || chartType === ChartType.ROLLING_DPS}
             {#if !$settings.general.showNames}
                 <div class="mt-2 h-[300px]" use:chartable={chartOptions} style="width: calc(100vw - 4.5rem);" />
             {:else}

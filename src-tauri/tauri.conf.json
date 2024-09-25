@@ -8,7 +8,7 @@
     },
     "package": {
         "productName": "LOA Logs",
-        "version": "1.16.4-sync"
+        "version": "1.16.5-sync"
     },
     "tauri": {
         "allowlist": {

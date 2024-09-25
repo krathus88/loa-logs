@@ -1,10 +1,10 @@
 {
-    "version": "v1.16.4-sync",
-    "notes": "### v1.16.4-sync\n#### NEW FEATURES\n- updated app icon\n- added quick setting toggles to logs\n\n![toggles](https://i.imgur.com/roxHSBM.png)\n- added death counts\n\n![death_counts](https://i.imgur.com/dAwztWg.png)\n\n#### BUG FIXES AND IMPROVEMENTS\n- added esthers to split party view (oops i forgot them initially)\n- fix searching by class\n\nfull patch notes on [github](https://github.com/snoww/loa-logs/releases/latest)\n\nsend bug reports/suggestions to [ramen shop server](https://discord.gg/RXvTMV2YHu)",
-    "pub_date": "2024-09-16T21:40:33.464Z",
+    "version": "v1.16.5-sync",
+    "notes": "### v1.16.5-sync\n#### NEW FEATURES\n- added button to show max damage for a cast in skill cast log\n\n![max_cast](https://i.imgur.com/0ZNTm41.png)\n\n- added button to launch lost ark within meter\n- added option to auto launch lost ark when starting meter\n\n![start_lost_ark](https://i.imgur.com/y4VNUth.png)\n\n![auto_launch](https://i.imgur.com/WYxAfgt.png)\n\n#### BUG FIXES AND IMPROVEMENTS\n- fixed death count not showing in behemoth if everyone was alive at the end of the raid, but had deaths during the raid\n\nfull patch notes on [github](https://github.com/snoww/loa-logs/releases/latest)\n\nsend bug reports/suggestions to [ramen shop server](https://discord.gg/RXvTMV2YHu)",
+    "pub_date": "2024-09-25T07:22:22.660Z",
     "platforms": {
         "windows-x86_64": {
-            "url": "https://github.com/krathus88/loa-logs/releases/download/v1.16.4-sync/LOA.Logs_1.16.4-sync_x64-setup.nsis.zip",
+            "url": "https://github.com/krathus88/loa-logs/releases/download/v1.16.5-sync/LOA.Logs_1.16.5-sync_x64-setup.nsis.zip",
             "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVSR2FmaUQwc1dJSm9VbDQwTHlid08rVFRpYVpQWm1iZ1hrYklMbndnOXl2dlBMNEpCZDhxcSsrMXFQVnp0VlhTMmN1d29yN1JkZG5kbDhtRnhEVVd1a2JSZExnQ3hrNEFFPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzI2NzA4MTg0CWZpbGU6TE9BIExvZ3NfMS4xNi40LXN5bmNfeDY0LXNldHVwLm5zaXMuemlwCkpKMHRKYnhqajFOb2tNdG9hMTlPMzM1R0J5ZU96am84bnpGZU11RWd4djFSVzJPMGJjZHo2cHdhUURmQkF1MSs0NzM1TE95anJZakdmaUQ0RGl3K0NBPT0K"
         }
     }
