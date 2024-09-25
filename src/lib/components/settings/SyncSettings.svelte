@@ -5,17 +5,6 @@
     import { invoke } from "@tauri-apps/api";
     import { uploadLog } from "$lib/utils/sync";
 
-    let result = "";
-
-    async function checkAccessToken() {
-        if ($settings.sync.accessToken === "") {
-            result = "Access token is not set.";
-            return;
-        }
-
-        return result;
-    }
-
     function saveExcludedCharacters() {
         $settings.sync.excludedCharacters = excludedCharacters.split("\n");
     }
@@ -103,7 +92,7 @@
                         await invoke("sync", {
                             encounter: Number(key),
                             upstream: upstream,
-                            failed: is_success,
+                            failed: !is_success,
                             isValid: is_valid
                         });
 
@@ -147,7 +136,7 @@
                 await invoke("sync", {
                     encounter: Number(key),
                     upstream: upstream,
-                    failed: is_success,
+                    failed: !is_success,
                     isValid: is_valid
                 });
 
