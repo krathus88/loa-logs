@@ -2,46 +2,52 @@ import { invoke } from "@tauri-apps/api";
 import pako from "pako";
 
 export const bosses = [
+    // Legion Raids
+    // Valtan
     "Dark Mountain Predator",
-    "Destroyer Lucas",
-    "Leader Lugaru",
-    "Demon Beast Commander Valtan",
     "Ravaged Tyrant of Beasts",
-    "Incubus Morphe",
+    // Vykas
     "Nightmarish Morphe",
     "Covetous Devourer Vykas",
     "Covetous Legion Commander Vykas",
+    // Kakul-Saydon
     "Saydon",
     "Kakul",
-    "Kakul-Saydon",
     "Encore-Desiring Kakul-Saydon",
+    // Brelshaza
     "Gehenna Helkasirs",
-    "Prokel",
-    "Prokel's Spiritual Echo",
     "Ashtarot",
     "Primordial Nightmare",
-    "Brelshaza, Monarch of Nightmares",
     "Phantom Legion Commander Brelshaza",
-    "Griefbringer Maurug",
+    // Akkan
     "Evolved Maurug",
     "Lord of Degradation Akkan",
     "Plague Legion Commander Akkan",
     "Lord of Kartheon Akkan",
+    // Thaemine
+    "Killineza the Dark Worshipper",
+    "Valinak, Herald of the End",
+    "Thaemine the Lightqueller",
+    "Thaemine, Conqueror of Stars",
+    // Echidna,
+    "Red Doom Narkiel",
+    "Covetous Master Echidna",
+    // Behemoth
+    "Behemoth, the Storm Commander",
+    "Behemoth, Cruel Storm Slayer",
+    // Abyssal Dungeons
+    // Kayangel
     "Tienis",
-    "Celestial Sentinel",
     "Prunya",
     "Lauriel",
+    // Ivory Tower
     "Kaltaya, the Blooming Chaos",
     "Rakathus, the Lurking Arrogance",
-    "Firehorn, Trampler of Earth",
     "Lazaram, the Trailblazer",
-    "Gargadeth",
-    "Sonavel",
-    "Hanumatan",
-    "Kungelanium",
-    "Deskaluda",
-    "Behemoth, the Storm Commander",
-    "Behemoth, Cruel Storm Slayer"
+    // Guardian Raids - Trial
+    "Achates",
+    "Caliligos",
+    "Hanumatan"
 ];
 
 export async function uploadLog(encounter: any[], ids_batch: number[], settings: any) {

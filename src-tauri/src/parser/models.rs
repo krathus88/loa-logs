@@ -1308,10 +1308,12 @@ lazy_static! {
         // G2
         map.insert("Ravaged Tyrant of Beasts", vec!["Normal", "Hard","Extreme", "Inferno"]);
         // # Vykas
-        // G1
-        map.insert("Covetous Devourer Vykas", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        // G2
-        map.insert("Covetous Legion Commander Vykas", vec!["Normal", "Hard", "Extreme", "Inferno"]);
+        // G1  // G2 -- Inferno
+        map.insert("Covetous Devourer Vykas", vec!["Normal", "Hard","Extreme",  "Inferno"]);
+        // G1 -- Inferno
+        map.insert("Nightmarish Morphe", vec!["Inferno"]);
+        // G2  // G3 -- Inferno
+        map.insert("Covetous Legion Commander Vykas", vec!["Normal", "Hard","Extreme",  "Inferno"]);
         // # Kakul-Saydon
         // G1
         map.insert("Saydon", vec!["Normal", "Hard", "Extreme", "Inferno"]);
@@ -1345,21 +1347,13 @@ lazy_static! {
         map.insert("Valinak, Herald of the End", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // G3
         map.insert("Thaemine the Lightqueller", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
-        map.insert("Dark Greatsword", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
         // G4
-        map.insert("Darkness Legion Commander Thaemine", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
-        map.insert("Thaemine Prokel", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
         map.insert("Thaemine, Conqueror of Stars", vec!["Normal", "Hard", "Extreme", "Inferno", "The First"]);
         // # Echidna
         // G1
         map.insert("Red Doom Narkiel", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Agris", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // G2
-        map.insert("Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         map.insert("Covetous Master Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Desire in Full Bloom, Echidna", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Alcaone, the Twisted Venom", vec!["Normal", "Hard", "Extreme", "Inferno"]);
-        map.insert("Agris, the Devouring Bog", vec!["Normal", "Hard", "Extreme", "Inferno"]);
         // # Behemoth
         // G1
         map.insert("Behemoth, the Storm Commander", vec!["Normal", "Hard", "Extreme", "Inferno"]);

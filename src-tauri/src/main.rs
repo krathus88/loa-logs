@@ -408,7 +408,7 @@ fn setup_db(resource_path: &Path) -> Result<(), rusqlite::Error> {
 fn migration_sync(tx: &Transaction) -> Result<(), rusqlite::Error> {
     tx.execute_batch(
         "
-        CREATE TABLE IF NOT EXISTS sync_moon (
+        CREATE TABLE IF NOT EXISTS sync_loa_moon (
             encounter_id INTEGER PRIMARY KEY,
             upstream_id INTEGER,
             failed BOOLEAN NOT NULL DEFAULT false,
@@ -1238,9 +1238,9 @@ fn get_sync_candidates(window: tauri::Window) -> Vec<i32> {
             "
         SELECT id, current_boss, difficulty
         FROM encounter_preview
-        LEFT JOIN sync_moon ON encounter_id = id
+        LEFT JOIN sync_loa_moon ON encounter_id = id
         WHERE cleared = true
-            AND (sync_moon.upstream_id IS NULL AND sync_moon.is_valid = true OR sync_moon.encounter_id IS NULL)
+            AND (sync_loa_moon.upstream_id IS NULL AND sync_loa_moon.is_valid = true OR sync_loa_moon.encounter_id IS NULL)
             AND difficulty IS NOT NULL
             AND fight_start > 1718751600000
         ORDER BY fight_start;
@@ -1283,7 +1283,7 @@ fn sync(window: tauri::Window, encounter: i32, upstream: Option<i32>, failed: bo
 
     conn.execute(
         "
-        INSERT OR REPLACE INTO sync_moon (encounter_id, upstream_id, failed, is_valid)
+        INSERT OR REPLACE INTO sync_loa_moon (encounter_id, upstream_id, failed, is_valid)
         VALUES(?, ?, ?, ?);
         ",
         params![encounter, upstream, failed, isValid]).unwrap();
